@@ -10,9 +10,17 @@ from cryptography.fernet import Fernet
 import datetime
 import base64
 
+# Define the hidden directory
+hidden_dir = os.path.join(os.getcwd(), ".secure_data")
+
+# Create the hidden directory if it doesn't exist
+if not os.path.exists(hidden_dir):
+    os.makedirs(hidden_dir)
+
 # Database setup
 def init_db():
-    conn = sqlite3.connect('user_data.db')
+    db_path = os.path.join(hidden_dir, "user_data.db")
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY,
@@ -60,7 +68,7 @@ def generate_ssh_key_pair():
 
 # Register a new user
 def register_user():
-    conn = sqlite3.connect('user_data.db')
+    conn = sqlite3.connect(os.path.join(hidden_dir, "user_data.db"))
     c = conn.cursor()
     username = input("Enter a username: ")
     password = getpass.getpass("Enter a password: ")
@@ -88,7 +96,7 @@ def register_user():
             return
     else:
         private_key, public_key = generate_ssh_key_pair()
-        private_key_path = f"{username}_private_key.pem"
+        private_key_path = os.path.join(hidden_dir, f"{username}_private_key.pem")
         with open(private_key_path, "wb") as key_file:
             key_file.write(private_key)
         print(f"Generated new SSH key pair:\nPrivate Key saved to {private_key_path}\nPublic Key:\n{public_key.decode()}")
@@ -104,7 +112,7 @@ def register_user():
 
 # Login existing user
 def login_user():
-    conn = sqlite3.connect('user_data.db')
+    conn = sqlite3.connect(os.path.join(hidden_dir, "user_data.db"))
     c = conn.cursor()
     username = input("Enter your username: ")
     password = getpass.getpass("Enter your password: ")
@@ -167,7 +175,7 @@ def save_message(user_id, key):
     message = input("Enter your message: ")
     encrypted_message = encrypt_message(message, key)
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    conn = sqlite3.connect('user_data.db')
+    conn = sqlite3.connect(os.path.join(hidden_dir, "user_data.db"))
     c = conn.cursor()
     c.execute("INSERT INTO messages (user_id, timestamp, encrypted_message) VALUES (?, ?, ?)",
               (user_id, timestamp, encrypted_message))
@@ -177,7 +185,7 @@ def save_message(user_id, key):
 
 # Recall saved messages
 def recall_messages(user_id, key):
-    conn = sqlite3.connect('user_data.db')
+    conn = sqlite3.connect(os.path.join(hidden_dir, "user_data.db"))
     c = conn.cursor()
     c.execute("SELECT id, timestamp FROM messages WHERE user_id = ?", (user_id,))
     messages = c.fetchall()
@@ -188,7 +196,7 @@ def recall_messages(user_id, key):
         choice = int(input("Select a message number to recall: "))
         if 1 <= choice <= len(messages):
             message_id = messages[choice - 1][0]
-            conn = sqlite3.connect('user_data.db')
+            conn = sqlite3.connect(os.path.join(hidden_dir, "user_data.db"))
             c = conn.cursor()
             c.execute("SELECT encrypted_message FROM messages WHERE id = ?", (message_id,))
             encrypted_message = c.fetchone()[0]
