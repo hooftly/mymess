@@ -2,6 +2,7 @@ import sqlite3
 import hashlib
 import os
 import getpass
+import sys
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -172,7 +173,8 @@ def decrypt_message(encrypted_message, key):
 
 # Save a new message
 def save_message(user_id, key):
-    message = input("Enter your message: ")
+    print("Enter your message. Press Ctrl+D (Ctrl+Z on Windows) to save it.")
+    message = sys.stdin.read()
     encrypted_message = encrypt_message(message, key)
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn = sqlite3.connect(os.path.join(hidden_dir, "user_data.db"))
