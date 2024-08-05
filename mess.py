@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 import datetime
 import base64
 
@@ -203,7 +203,10 @@ def recall_messages(user_id, key):
             c.execute("SELECT encrypted_message FROM messages WHERE id = ?", (message_id,))
             encrypted_message = c.fetchone()[0]
             conn.close()
-            print("Message:", decrypt_message(encrypted_message, key))
+            try:
+                print("Message:", decrypt_message(encrypted_message, key))
+            except InvalidToken:
+                print("Error: The provided SSH key is incorrect and cannot decrypt the message.")
         else:
             print("Invalid choice!")
     else:
@@ -245,4 +248,4 @@ def main():
             print("Invalid option!")
 
 if __name__ == "__main__":
-    main()
+   main()
